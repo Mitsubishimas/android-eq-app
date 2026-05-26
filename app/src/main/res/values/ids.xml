@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Normal Activity IDs -->
+    <item name="eq_zone_btn" type="id" />
+    <item name="sound_zone_btn" type="id" />
+    <item name="fragment_container" type="id" />
+    <item name="eq_zone_tabs" type="id" />
+    
+    <!-- Rohm Activity IDs -->
+    <item name="rohm_tabs" type="id" />
+    <item name="tab_eq" type="id" />
+    <item name="tab_surround" type="id" />
+    <item name="tab_bass" type="id" />
+    <item name="tab_zone" type="id" />
+    <item name="tab_filter" type="id" />
+    
+    <!-- EQ View IDs -->
+    <item name="eq_container" type="id" />
+    <item name="eq_scroll" type="id" />
+    <item name="eq_bars_container" type="id" />
+    <item name="nav_buttons" type="id" />
+    <item name="nav_left" type="id" />
+    <item name="nav_center" type="id" />
+    <item name="nav_right" type="id" />
+    <item name="nav_end" type="id" />
+    
+    <!-- EQ Mode IDs -->
+    <item name="eq_mode_title" type="id" />
+    <item name="eq_modes" type="id" />
+    <item name="mode_custom" type="id" />
+    <item name="mode_classic" type="id" />
+    <item name="mode_rock" type="id" />
+    <item name="mode_jazz" type="id" />
+    <item name="mode_pop" type="id" />
+    <item name="mode_dance" type="id" />
+    <item name="mode_vocal" type="id" />
+    
+    <!-- EQ Workspace IDs -->
+    <item name="eq_workspace" type="id" />
+    <item name="eq_group_1" type="id" />
+    <item name="eq_group_2" type="id" />
+    <item name="eq_group_3" type="id" />
+    <item name="eq_curve" type="id" />
+    <item name="eq_nav" type="id" />
+    <item name="eq_nav_1" type="id" />
+    <item name="eq_nav_2" type="id" />
+    <item name="eq_nav_3" type="id" />
+    <item name="eq_level_page" type="id" />
+    
+    <!-- Bass Boost IDs -->
+    <item name="boost_car" type="id" />
+    <item name="front_bass_seek" type="id" />
+    <item name="rear_bass_seek" type="id" />
+    <item name="front_bass_freq" type="id" />
+    <item name="rear_bass_freq" type="id" />
+    <item name="boost_reset" type="id" />
+    
+    <!-- Bass Filter IDs -->
+    <item name="filter_car" type="id" />
+    <item name="filter_front_mute" type="id" />
+    <item name="front_voice" type="id" />
+    <item name="front_filter_value" type="id" />
+    <item name="front_filter_seek" type="id" />
+    <item name="filter_rear_mute" type="id" />
+    <item name="rear_voice" type="id" />
+    <item name="rear_filter_value" type="id" />
+    <item name="rear_filter_seek" type="id" />
+    <item name="filter_reset" type="id" />
+    
+    <!-- Zone Sound IDs -->
+    <item name="zone_view" type="id" />
+    <item name="zone_left" type="id" />
+    <item name="zone_right" type="id" />
+    <item name="zone_up" type="id" />
+    <item name="zone_down" type="id" />
+    <item name="zone_reset" type="id" />
+    <item name="sub_freq_seek" type="id" />
+    <item name="sub_freq_text" type="id" />
+    <item name="spdif_seek" type="id" />
+    <item name="center_seek" type="id" />
+    <item name="sub_gain_seek" type="id" />
+    <item name="sub_reset" type="id" />
+    
+    <!-- SeekBar IDs -->
+    <item name="vertical_seekbar" type="id" />
+    <item name="subwoofer_seek" type="id" />
+    <item name="loudness_seek" type="id" />
+    
+    <!-- Popup IDs -->
+    <item name="q_value_seek" type="id" />
+    <item name="surround_modes" type="id" />
+    <item name="surround_off" type="id" />
+    <item name="surround_driver" type="id" />
+    <item name="surround_passenger" type="id" />
+    <item name="surround_rear" type="id" />
+    <item name="surround_all" type="id" />
+    <item name="surround_stage" type="id" />
+</resources>
+    <item name="tab_master" type="id" />

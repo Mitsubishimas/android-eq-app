@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp"
+        android:gravity="center">
+
+        <ImageView
+            android:id="@+id/boost_car"
+            android:layout_width="200dp"
+            android:layout_height="150dp"
+            android:src="@drawable/ic_car_icon" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="20dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/front_bass"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <com.tw.eq.widget.VerticalSeekBar
+                    android:id="@+id/front_bass_seek"
+                    android:layout_width="40dp"
+                    android:layout_height="180dp"
+                    android:max="12"
+                    android:progress="0" />
+
+                <com.tw.eq.widget.PickerView
+                    android:id="@+id/front_bass_freq"
+                    android:layout_width="80dp"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="10dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/rear_bass"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <com.tw.eq.widget.VerticalSeekBar
+                    android:id="@+id/rear_bass_seek"
+                    android:layout_width="40dp"
+                    android:layout_height="180dp"
+                    android:max="12"
+                    android:progress="0" />
+
+                <com.tw.eq.widget.PickerView
+                    android:id="@+id/rear_bass_freq"
+                    android:layout_width="80dp"
+                    android:layout_height="60dp"
+                    android:layout_marginTop="10dp" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/boost_reset"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/reset"
+            android:layout_marginTop="20dp"
+            android:background="@drawable/button_bg" />
+
+    </LinearLayout>
+
+</ScrollView>

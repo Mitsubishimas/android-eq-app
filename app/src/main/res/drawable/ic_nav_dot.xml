@@ -1,0 +1,16 @@
+<level-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:maxLevel="0">
+        <shape>
+            <solid android:color="@color/text_secondary" />
+            <size android:width="8dp" android:height="8dp" />
+            <corners android:radius="4dp" />
+        </shape>
+    </item>
+    <item android:maxLevel="1">
+        <shape>
+            <solid android:color="@color/eq_progress" />
+            <size android:width="12dp" android:height="12dp" />
+            <corners android:radius="6dp" />
+        </shape>
+    </item>
+</level-list>

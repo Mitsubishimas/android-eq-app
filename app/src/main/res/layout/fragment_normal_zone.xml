@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="16dp">
+
+    <com.tw.eq.widget.ZoneView
+        android:id="@+id/zone_view"
+        android:layout_width="300dp"
+        android:layout_height="300dp"
+        android:layout_marginBottom="20dp" />
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <ImageButton
+            android:id="@+id/zone_left"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_arrow_left"
+            android:background="?attr/selectableItemBackground" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/balance"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <ImageButton
+            android:id="@+id/zone_right"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_arrow_right"
+            android:background="?attr/selectableItemBackground" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginTop="10dp">
+
+        <ImageButton
+            android:id="@+id/zone_up"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_arrow_up"
+            android:background="?attr/selectableItemBackground" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/fader"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <ImageButton
+            android:id="@+id/zone_down"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_arrow_down"
+            android:background="?attr/selectableItemBackground" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/zone_reset"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/reset_center"
+        android:layout_marginTop="20dp"
+        android:background="@drawable/button_bg" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="20dp"
+        android:padding="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/subwoofer"
+            android:textColor="@color/text_primary" />
+
+        <com.tw.eq.widget.EqScaleView
+            android:id="@+id/subwoofer_seek"
+            android:layout_width="60dp"
+            android:layout_height="180dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/loudness"
+            android:textColor="@color/text_primary" />
+
+        <com.tw.eq.widget.EqScaleView
+            android:id="@+id/loudness_seek"
+            android:layout_width="60dp"
+            android:layout_height="180dp" />
+    </LinearLayout>
+
+</LinearLayout>

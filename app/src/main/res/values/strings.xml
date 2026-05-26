@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">EQ DSP Controller</string>
+    
+    <!-- Main Tabs -->
+    <string name="eq_zone">Equalizer</string>
+    <string name="sound_zone">Sound Zone</string>
+    <string name="bass_boost">Bass Boost</string>
+    <string name="surround_sound">Surround Sound</string>
+    <string name="bass_filter">Bass Filter</string>
+    
+    <!-- EQ Modes -->
+    <string name="eq_modes">EQ Modes</string>
+    <string name="mode_custom">Custom</string>
+    <string name="mode_classic">Classic</string>
+    <string name="mode_rock">Rock</string>
+    <string name="mode_jazz">Jazz</string>
+    <string name="mode_pop">Pop</string>
+    <string name="mode_dance">Dance</string>
+    <string name="mode_vocal">Vocal</string>
+    
+    <!-- Sound -->
+    <string name="balance">Balance</string>
+    <string name="fader">Fader</string>
+    <string name="subwoofer">Subwoofer</string>
+    <string name="loudness">Loudness</string>
+    <string name="subwoofer_settings">Subwoofer Settings</string>
+    <string name="spdif">SPDIF</string>
+    <string name="center">Center</string>
+    <string name="sub_gain">Sub Gain</string>
+    <string name="sub_freq">Sub Freq</string>
+    <string name="front">Front</string>
+    <string name="rear">Rear</string>
+    
+    <!-- Bass Boost -->
+    <string name="front_bass">Front Bass</string>
+    <string name="rear_bass">Rear Bass</string>
+    
+    <!-- Surround Sound -->
+    <string name="surround_off">Off</string>
+    <string name="surround_driver">Driver</string>
+    <string name="surround_passenger">Passenger</string>
+    <string name="surround_rear">Rear</string>
+    <string name="surround_all">All</string>
+    <string name="surround_stage">Stage</string>
+    <string name="surround_mode">Mode</string>
+    <string name="q_value">Q Value</string>
+    
+    <!-- Buttons -->
+    <string name="reset">Reset</string>
+    <string name="reset_center">Reset to Center</string>
+    <string name="reset_sub">Reset Subwoofer</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    
+    <!-- Frequencies -->
+    <string name="freq_25hz">25Hz</string>
+    <string name="freq_31_5hz">31.5Hz</string>
+    <string name="freq_40hz">40Hz</string>
+    <string name="freq_50hz">50Hz</string>
+    <string name="freq_63hz">63Hz</string>
+    <string name="freq_80hz">80Hz</string>
+    <string name="freq_100hz">100Hz</string>
+    <string name="freq_125hz">125Hz</string>
+    
+    <!-- Messages -->
+    <string name="dsp_not_installed">DSP app not installed!</string>
+    <string name="no_support">Multi-window mode not supported</string>
+</resources>
+    <!-- MasterMitsubishi вкладка -->
+    <string name="master_mitsubishi">MasterMitsubishi</string>
+    <string name="kometa_226s">Комета 226С (5 полос)</string>
+    <string name="kometa_225">Комета 225 (3 полосы)</string>
+    <string name="bass">Bass</string>
+    <string name="mid">Mid</string>
+    <string name="treble">Treble</string>
+    <string name="eq_5band">5-полосный эквалайзер</string>
+    <string name="eq_3band">3-полосный эквалайзер</string>
+    <string name="freq_63hz">63 Гц</string>
+    <string name="freq_330hz">330 Гц</string>
+    <string name="freq_2000hz">2000 Гц</string>
+    <string name="freq_6300hz">6300 Гц</string>
+    <string name="freq_15000hz">15000 Гц</string>
+    <string name="eq_mode">Режим эквалайзера</string>
+    <string name="preset">Предустановка</string>
+    <string name="select_preset">Выберите предустановку</string>

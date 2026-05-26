@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp"
+    android:background="@drawable/popup_bg">
+
+    <RadioGroup
+        android:id="@+id/surround_modes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <RadioButton
+            android:id="@+id/surround_off"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/surround_off"
+            android:button="@null"
+            android:background="@drawable/surround_mode_selector"
+            android:padding="8dp"
+            android:textColor="@drawable/surround_mode_text_selector" />
+
+        <RadioButton
+            android:id="@+id/surround_driver"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/surround_driver"
+            android:button="@null"
+            android:background="@drawable/surround_mode_selector"
+            android:padding="8dp"
+            android:textColor="@drawable/surround_mode_text_selector" />
+
+        <RadioButton
+            android:id="@+id/surround_passenger"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/surround_passenger"
+            android:button="@null"
+            android:background="@drawable/surround_mode_selector"
+            android:padding="8dp"
+            android:textColor="@drawable/surround_mode_text_selector" />
+
+        <RadioButton
+            android:id="@+id/surround_rear"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/surround_rear"
+            android:button="@null"
+            android:background="@drawable/surround_mode_selector"
+            android:padding="8dp"
+            android:textColor="@drawable/surround_mode_text_selector" />
+
+        <RadioButton
+            android:id="@+id/surround_all"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/surround_all"
+            android:button="@null"
+            android:background="@drawable/surround_mode_selector"
+            android:padding="8dp"
+            android:textColor="@drawable/surround_mode_text_selector" />
+
+        <RadioButton
+            android:id="@+id/surround_stage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/surround_stage"
+            android:button="@null"
+            android:background="@drawable/surround_mode_selector"
+            android:padding="8dp"
+            android:textColor="@drawable/surround_mode_text_selector" />
+
+    </RadioGroup>
+
+</LinearLayout>

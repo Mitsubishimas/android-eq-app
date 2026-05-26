@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/eq_background">
+
+    <HorizontalScrollView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp">
+
+            <RadioGroup
+                android:id="@+id/rohm_tabs"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/tab_eq"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/eq_zone"
+                    android:button="@null"
+                    android:background="@drawable/tab_selector"
+                    android:padding="10dp"
+                    android:textColor="@drawable/tab_text_selector" />
+
+                <RadioButton
+                    android:id="@+id/tab_surround"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/surround_sound"
+                    android:button="@null"
+                    android:background="@drawable/tab_selector"
+                    android:padding="10dp"
+                    android:textColor="@drawable/tab_text_selector" />
+
+                <RadioButton
+                    android:id="@+id/tab_bass"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/bass_boost"
+                    android:button="@null"
+                    android:background="@drawable/tab_selector"
+                    android:padding="10dp"
+                    android:textColor="@drawable/tab_text_selector" />
+
+                <RadioButton
+                    android:id="@+id/tab_zone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sound_zone"
+                    android:button="@null"
+                    android:background="@drawable/tab_selector"
+                    android:padding="10dp"
+                    android:textColor="@drawable/tab_text_selector" />
+
+                <RadioButton
+                    android:id="@+id/tab_filter"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/bass_filter"
+                    android:button="@null"
+                    android:background="@drawable/tab_selector"
+                    android:padding="10dp"
+                    android:textColor="@drawable/tab_text_selector" />
+
+                <RadioButton
+                    android:id="@+id/tab_master"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/master_mitsubishi"
+                    android:button="@null"
+                    android:background="@drawable/tab_selector"
+                    android:padding="10dp"
+                    android:textColor="@drawable/tab_text_selector" />
+
+            </RadioGroup>
+
+        </LinearLayout>
+
+    </HorizontalScrollView>
+
+    <FrameLayout
+        android:id="@+id/fragment_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+</LinearLayout>

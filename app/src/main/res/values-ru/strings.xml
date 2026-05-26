@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Эквалайзер DSP</string>
+    
+    <!-- Основные вкладки -->
+    <string name="eq_zone">Эквалайзер</string>
+    <string name="sound_zone">Звук</string>
+    <string name="bass_boost">Усиление баса</string>
+    <string name="surround_sound">Объемный звук</string>
+    <string name="bass_filter">Фильтр НЧ</string>
+    
+    <!-- Режимы эквалайзера -->
+    <string name="eq_modes">Режимы эквалайзера</string>
+    <string name="mode_custom">Пользовательский</string>
+    <string name="mode_classic">Классика</string>
+    <string name="mode_rock">Рок</string>
+    <string name="mode_jazz">Джаз</string>
+    <string name="mode_pop">Поп</string>
+    <string name="mode_dance">Танцевальный</string>
+    <string name="mode_vocal">Вокал</string>
+    
+    <!-- Звук -->
+    <string name="balance">Баланс</string>
+    <string name="fader">Фейдер</string>
+    <string name="subwoofer">Сабвуфер</string>
+    <string name="loudness">Громкость</string>
+    <string name="subwoofer_settings">Настройки сабвуфера</string>
+    <string name="spdif">SPDIF</string>
+    <string name="center">Центр</string>
+    <string name="sub_gain">Усиление сабвуфера</string>
+    <string name="sub_freq">Частота сабвуфера</string>
+    <string name="front">Перед</string>
+    <string name="rear">Зад</string>
+    
+    <!-- Bass Boost -->
+    <string name="front_bass">Передний бас</string>
+    <string name="rear_bass">Задний бас</string>
+    
+    <!-- Объемный звук -->
+    <string name="surround_off">Выкл</string>
+    <string name="surround_driver">Водитель</string>
+    <string name="surround_passenger">Пассажир</string>
+    <string name="surround_rear">Задние</string>
+    <string name="surround_all">Все</string>
+    <string name="surround_stage">Сцена</string>
+    <string name="surround_mode">Режим</string>
+    <string name="q_value">Q-фактор</string>
+    
+    <!-- Кнопки -->
+    <string name="reset">Сброс</string>
+    <string name="reset_center">Сброс в центр</string>
+    <string name="reset_sub">Сброс сабвуфера</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Отмена</string>
+    
+    <!-- Частоты -->
+    <string name="freq_25hz">25 Гц</string>
+    <string name="freq_31_5hz">31.5 Гц</string>
+    <string name="freq_40hz">40 Гц</string>
+    <string name="freq_50hz">50 Гц</string>
+    <string name="freq_63hz">63 Гц</string>
+    <string name="freq_80hz">80 Гц</string>
+    <string name="freq_100hz">100 Гц</string>
+    <string name="freq_125hz">125 Гц</string>
+    
+    <!-- Сообщения -->
+    <string name="dsp_not_installed">DSP приложение не установлено!</string>
+    <string name="no_support">Ваше устройство не поддерживает многоконный режим</string>
+</resources>
+    <!-- MasterMitsubishi вкладка -->
+    <string name="master_mitsubishi">MasterMitsubishi</string>
+    <string name="kometa_226s">Комета 226С (5 полос)</string>
+    <string name="kometa_225">Комета 225 (3 полосы)</string>
+    <string name="bass">Низкие</string>
+    <string name="mid">Средние</string>
+    <string name="treble">Высокие</string>
+    <string name="eq_5band">5-полосный эквалайзер</string>
+    <string name="eq_3band">3-полосный эквалайзер</string>
+    <string name="freq_63hz">63 Гц</string>
+    <string name="freq_330hz">330 Гц</string>
+    <string name="freq_2000hz">2000 Гц</string>
+    <string name="freq_6300hz">6300 Гц</string>
+    <string name="freq_15000hz">15000 Гц</string>
+    <string name="eq_mode">Режим эквалайзера</string>
+    <string name="preset">Предустановка</string>
+    <string name="select_preset">Выберите предустановку</string>
