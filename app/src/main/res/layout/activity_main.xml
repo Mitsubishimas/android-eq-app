@@ -12,14 +12,45 @@
 
         <!-- Заголовок -->
         <TextView
+            android:id="@+id/title_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="MasterMitsubishi EQ"
             android:textColor="#2196F3"
-            android:textSize="24sp"
+            android:textSize="28sp"
             android:textStyle="bold"
             android:gravity="center"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="8dp" />
+
+        <!-- Статус DSP -->
+        <TextView
+            android:id="@+id/dsp_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Проверка DSP..."
+            android:textColor="#FFA500"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Информация о DSP -->
+        <TextView
+            android:id="@+id/dsp_info"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="#888888"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Разделитель -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#333333"
+            android:layout_marginBottom="16dp" />
 
         <!-- Выбор режима -->
         <TextView
