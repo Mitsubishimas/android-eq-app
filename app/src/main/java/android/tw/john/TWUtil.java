@@ -1,13 +1,14 @@
 package android.tw.john;
 
 import android.os.Handler;
+import java.util.HashMap;
+import java.util.Map;
 
-/**
- * Системный класс для работы с DSP.
- * Реальная реализация находится в прошивке магнитолы.
- * Этот файл нужен ТОЛЬКО для компиляции.
- */
 public class TWUtil {
+    protected int mScrollX;
+    protected int mScrollY;
+    private Map<String, Handler> handlers = new HashMap<>();
+    
     public int open(short[] channels) { return 0; }
     public void start() {}
     public void stop() {}
@@ -15,6 +16,6 @@ public class TWUtil {
     public int write(int command, int value) { return 0; }
     public void write(int command, int index, int value) {}
     public void write(int command, int index, byte[] data) {}
-    public void addHandler(String name, Handler handler) {}
-    public void removeHandler(String name) {}
+    public void addHandler(String name, Handler handler) { handlers.put(name, handler); }
+    public void removeHandler(String name) { handlers.remove(name); }
 }
