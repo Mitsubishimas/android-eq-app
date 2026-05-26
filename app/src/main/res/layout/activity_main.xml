@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#1A1A1A">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Заголовок -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="MasterMitsubishi EQ"
+            android:textColor="#2196F3"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Выбор режима -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Режим эквалайзера"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/mode_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Выбор предустановки -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Предустановка"
+            android:textColor="#FFFFFF"
+            android:textSize="16sp"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/preset_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="24dp" />
+
+        <!-- 5-полосный эквалайзер -->
+        <LinearLayout
+            android:id="@+id/layout_5band"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="5-полосный эквалайзер (Комета 226С)"
+                android:textColor="#2196F3"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="16dp" />
+
+            <!-- 63 Hz -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="63 Hz"
+                    android:textColor="#FFFFFF" />
+                <SeekBar
+                    android:id="@+id/seek_63hz"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="24"
+                    android:progress="12" />
+                <TextView
+                    android:id="@+id/value_63hz"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="0 dB"
+                    android:textColor="#2196F3"
+                    android:gravity="end" />
+            </LinearLayout>
+
+            <!-- 330 Hz -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="330 Hz"
+                    android:textColor="#FFFFFF" />
+                <SeekBar
+                    android:id="@+id/seek_330hz"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="24"
+                    android:progress="12" />
+                <TextView
+                    android:id="@+id/value_330hz"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="0 dB"
+                    android:textColor="#2196F3"
+                    android:gravity="end" />
+            </LinearLayout>
+
+            <!-- 2000 Hz -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="2000 Hz"
+                    android:textColor="#FFFFFF" />
+                <SeekBar
+                    android:id="@+id/seek_2000hz"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="24"
+                    android:progress="12" />
+                <TextView
+                    android:id="@+id/value_2000hz"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="0 dB"
+                    android:textColor="#2196F3"
+                    android:gravity="end" />
+            </LinearLayout>
+
+            <!-- 6300 Hz -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="6300 Hz"
+                    android:textColor="#FFFFFF" />
+                <SeekBar
+                    android:id="@+id/seek_6300hz"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="24"
+                    android:progress="12" />
+                <TextView
+                    android:id="@+id/value_6300hz"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="0 dB"
+                    android:textColor="#2196F3"
+                    android:gravity="end" />
+            </LinearLayout>
+
+            <!-- 15000 Hz -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="15000 Hz"
+                    android:textColor="#FFFFFF" />
+                <SeekBar
+                    android:id="@+id/seek_15000hz"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="24"
+                    android:progress="12" />
+                <TextView
+                    android:id="@+id/value_15000hz"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="0 dB"
+                    android:textColor="#2196F3"
+                    android:gravity="end" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- 3-полосный эквалайзер -->
+        <LinearLayout
+            android:id="@+id/layout_3band"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="3-полосный эквалайзер (Комета 225)"
+                android:textColor="#2196F3"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Bass -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="Bass"
+                    android:textColor="#FFFFFF" />
+                <SeekBar
+                    android:id="@+id/seek_bass"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="24"
+                    android:progress="12" />
+                <TextView
+                    android:id="@+id/value_bass"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="0 dB"
+                    android:textColor="#2196F3"
+                    android:gravity="end" />
+            </LinearLayout>
+
+            <!-- Mid -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="Mid"
+                    android:textColor="#FFFFFF" />
+                <SeekBar
+                    android:id="@+id/seek_mid"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="24"
+                    android:progress="12" />
+                <TextView
+                    android:id="@+id/value_mid"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="0 dB"
+                    android:textColor="#2196F3"
+                    android:gravity="end" />
+            </LinearLayout>
+
+            <!-- Treble -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="Treble"
+                    android:textColor="#FFFFFF" />
+                <SeekBar
+                    android:id="@+id/seek_treble"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="24"
+                    android:progress="12" />
+                <TextView
+                    android:id="@+id/value_treble"
+                    android:layout_width="50dp"
+                    android:layout_height="wrap_content"
+                    android:text="0 dB"
+                    android:textColor="#2196F3"
+                    android:gravity="end" />
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <!-- Кнопка сброса -->
+        <Button
+            android:id="@+id/reset_eq"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="24dp"
+            android:text="Сброс"
+            android:backgroundTint="#2196F3"
+            android:paddingLeft="32dp"
+            android:paddingRight="32dp" />
+
+    </LinearLayout>
+
+</ScrollView>
