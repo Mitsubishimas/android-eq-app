@@ -2,6 +2,7 @@ package com.tw.eq;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -9,6 +10,7 @@ import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.provider.Settings;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
@@ -20,6 +22,7 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
@@ -471,8 +474,8 @@ public class MainActivity extends AppCompatActivity {
 
     private void checkPermissions() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            if (!android.provider.Settings.System.canWrite(this)) {
-                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS);
+            if (!Settings.System.canWrite(this)) {
+                Intent intent = new Intent(Settings.ACTION_MANAGE_WRITE_SETTINGS);
                 intent.setData(android.net.Uri.parse("package:" + getPackageName()));
                 startActivity(intent);
             }
@@ -488,6 +491,23 @@ public class MainActivity extends AppCompatActivity {
         }
         if (!allGranted) {
             ActivityCompat.requestPermissions(this, permissions, 100);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 100) {
+            boolean allGranted = true;
+            for (int result : grantResults) {
+                if (result != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false;
+                    break;
+                }
+            }
+            if (!allGranted) {
+                Toast.makeText(this, "Некоторые разрешения не получены. Функции могут быть ограничены.", Toast.LENGTH_LONG).show();
+            }
         }
     }
 
@@ -563,7 +583,6 @@ public class MainActivity extends AppCompatActivity {
                 commadMethod = new Object() {
                     public void invoke(Object obj, int module, int cmd, int[] params) throws Exception {
                         // Конвертируем команду в формат TWUtil
-                        // Адрес = модуль * 256 + команда? Нужно уточнить
                         writeMethod.invoke(finalTwInstance, cmd, params[0], params[1]);
                     }
                 }.getClass().getMethod("invoke", Object.class, int.class, int.class, int[].class);
