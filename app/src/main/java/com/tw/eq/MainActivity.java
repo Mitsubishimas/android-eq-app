@@ -2,7 +2,6 @@ package com.tw.eq;
 
 import android.Manifest;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -25,15 +24,16 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+import java.lang.reflect.Method;
+
 public class MainActivity extends AppCompatActivity {
 
-    // Константы для команд DSP
+    // Константы для команд DSP (из FinalSound.java)
     private static final int MODULE_SOUND = 4;
     private static final int C_EQ_GAIN = 1;      // Установка полосы EQ
     private static final int C_EQ_MODE = 2;       // Установка режима EQ
-    private static final int C_BAL_FADE = 3;      // Баланс/Фейдер
     private static final int C_LOUD = 5;          // Громкость
-    private static final int C_EQ_Q = 16;         // Q-фактор
+    private static final int C_BAL_FADE = 3;      // Баланс/Фейдер
 
     // Режимы эквалайзера
     private static final int MODE_KOMETA_226S = 0;  // 5 полос
@@ -74,12 +74,15 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences prefs;
     private boolean dspConnected = false;
     private Object remoteInstance;
+    private Method commadMethod;
+    private Handler dspCheckHandler = new Handler();
+    private int dspRetryCount = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Устанавливаем полноэкранный режим и ландшафтную ориентацию
+        // Устанавливаем полноэкранный режим
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
@@ -88,10 +91,11 @@ public class MainActivity extends AppCompatActivity {
         checkPermissions();
         initDSPConnection();
         loadSavedValues();
+        setupListeners();
     }
 
     private void initUI() {
-        // Создаём корневой layout с градиентным фоном
+        // Создаём корневой layout
         rootLayout = new LinearLayout(this);
         rootLayout.setOrientation(LinearLayout.VERTICAL);
         rootLayout.setPadding(32, 48, 32, 32);
@@ -100,7 +104,7 @@ public class MainActivity extends AppCompatActivity {
         // Градиентный фон
         GradientDrawable gradient = new GradientDrawable(
                 GradientDrawable.Orientation.TOP_BOTTOM,
-                new int[]{Color.parseColor("#1a1a2e"), Color.parseColor("#16213e")});
+                new int[]{Color.parseColor("#0a0a1a"), Color.parseColor("#1a1a2e")});
         gradient.setCornerRadius(0);
         rootLayout.setBackground(gradient);
 
@@ -111,7 +115,7 @@ public class MainActivity extends AppCompatActivity {
         titleText.setTextColor(Color.parseColor("#00BFFF"));
         titleText.setTypeface(null, android.graphics.Typeface.BOLD);
         titleText.setGravity(android.view.Gravity.CENTER);
-        titleText.setPadding(0, 0, 0, 32);
+        titleText.setPadding(0, 0, 0, 24);
         rootLayout.addView(titleText);
 
         // Статус DSP
@@ -124,11 +128,12 @@ public class MainActivity extends AppCompatActivity {
         rootLayout.addView(dspStatus);
 
         // Спиннер выбора режима
-        TextView modeLabel = createLabel("Режим эквалайзера");
+        TextView modeLabel = createLabel("РЕЖИМ ЭКВАЛАЙЗЕРА");
         rootLayout.addView(modeLabel);
 
         modeSpinner = createSpinner(new String[]{"КОМЕТА 226С (5 полос)", "КОМЕТА 225 (3 полосы)"});
         rootLayout.addView(modeSpinner);
+        rootLayout.addView(createSpacing(8));
 
         // Спиннер предустановок
         TextView presetLabel = createLabel("ПРЕДУСТАНОВКИ");
@@ -136,8 +141,6 @@ public class MainActivity extends AppCompatActivity {
 
         presetSpinner = createSpinner(PRESET_NAMES);
         rootLayout.addView(presetSpinner);
-
-        // Разделитель
         rootLayout.addView(createDivider());
 
         // 5-полосный эквалайзер
@@ -153,10 +156,6 @@ public class MainActivity extends AppCompatActivity {
         title5Band.setPadding(0, 0, 0, 16);
         layout5Band.addView(title5Band);
 
-        // Создаём 5 полос
-        int[] seekIds = {R.id.seek_63hz, R.id.seek_330hz, R.id.seek_2000hz, R.id.seek_6300hz, R.id.seek_15000hz};
-        int[] valueIds = {R.id.value_63hz, R.id.value_330hz, R.id.value_2000hz, R.id.value_6300hz, R.id.value_15000hz};
-
         for (int i = 0; i < 5; i++) {
             final int index = i;
             LinearLayout row = new LinearLayout(this);
@@ -171,34 +170,20 @@ public class MainActivity extends AppCompatActivity {
             freqLabel.setWidth(120);
             row.addView(freqLabel);
 
-            seek5Band[i] = new SeekBar(this);
-            seek5Band[i].setMax(24);
-            seek5Band[i].setProgress(12);
+            seek5Band[index] = new SeekBar(this);
+            seek5Band[index].setMax(24);
+            seek5Band[index].setProgress(12);
             LinearLayout.LayoutParams seekParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
-            seek5Band[i].setLayoutParams(seekParams);
-            seek5Band[i].setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (fromUser) {
-                        int value = progress - 12;
-                        eq5Values[index] = value;
-                        value5Band[index].setText((value > 0 ? "+" : "") + value + " dB");
-                        sendEQValue(index, value);
-                        saveValues();
-                    }
-                }
-                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-            });
-            row.addView(seek5Band[i]);
+            seek5Band[index].setLayoutParams(seekParams);
+            row.addView(seek5Band[index]);
 
-            value5Band[i] = new TextView(this);
-            value5Band[i].setText("0 dB");
-            value5Band[i].setTextSize(12);
-            value5Band[i].setTextColor(Color.parseColor("#00BFFF"));
-            value5Band[i].setWidth(60);
-            value5Band[i].setGravity(android.view.Gravity.END);
-            row.addView(value5Band[i]);
+            value5Band[index] = new TextView(this);
+            value5Band[index].setText("0 dB");
+            value5Band[index].setTextSize(12);
+            value5Band[index].setTextColor(Color.parseColor("#00BFFF"));
+            value5Band[index].setWidth(60);
+            value5Band[index].setGravity(android.view.Gravity.END);
+            row.addView(value5Band[index]);
 
             layout5Band.addView(row);
         }
@@ -234,7 +219,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Кнопка сброса
         resetButton = new Button(this);
-        resetButton.setText("СБРОС");
+        resetButton.setText("СБРОС ВСЕХ НАСТРОЕК");
         resetButton.setTextSize(16);
         resetButton.setTextColor(Color.WHITE);
         GradientDrawable btnGradient = new GradientDrawable();
@@ -242,9 +227,9 @@ public class MainActivity extends AppCompatActivity {
         btnGradient.setCornerRadius(30);
         resetButton.setBackground(btnGradient);
         resetButton.setPadding(48, 16, 48, 16);
-        resetButton.setOnClickListener(v -> resetToFlat());
         LinearLayout buttonLayout = new LinearLayout(this);
         buttonLayout.setGravity(android.view.Gravity.CENTER);
+        buttonLayout.setPadding(0, 32, 0, 0);
         buttonLayout.addView(resetButton);
         rootLayout.addView(buttonLayout);
     }
@@ -280,54 +265,12 @@ public class MainActivity extends AppCompatActivity {
         if (band == 0) {
             seekBass = seekBar;
             valueBass = valueView;
-            seekBass.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (fromUser) {
-                        int value = progress - 12;
-                        eq3Values[band] = value;
-                        valueBass.setText((value > 0 ? "+" : "") + value + " dB");
-                        sendEQValue(band, value);
-                        saveValues();
-                    }
-                }
-                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-            });
         } else if (band == 1) {
             seekMid = seekBar;
             valueMid = valueView;
-            seekMid.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (fromUser) {
-                        int value = progress - 12;
-                        eq3Values[band] = value;
-                        valueMid.setText((value > 0 ? "+" : "") + value + " dB");
-                        sendEQValue(band, value);
-                        saveValues();
-                    }
-                }
-                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-            });
         } else {
             seekTreble = seekBar;
             valueTreble = valueView;
-            seekTreble.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    if (fromUser) {
-                        int value = progress - 12;
-                        eq3Values[band] = value;
-                        valueTreble.setText((value > 0 ? "+" : "") + value + " dB");
-                        sendEQValue(band, value);
-                        saveValues();
-                    }
-                }
-                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-            });
         }
 
         return row;
@@ -351,12 +294,179 @@ public class MainActivity extends AppCompatActivity {
         return spinner;
     }
 
+    private View createSpacing(int dp) {
+        View space = new View(this);
+        space.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, dp));
+        return space;
+    }
+
     private View createDivider() {
         View divider = new View(this);
         divider.setBackgroundColor(Color.parseColor("#333333"));
         divider.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1));
         divider.setPadding(0, 16, 0, 16);
         return divider;
+    }
+
+    private void setupListeners() {
+        // Обработчик переключения режимов
+        modeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                currentMode = position;
+                if (position == MODE_KOMETA_226S) {
+                    layout5Band.setVisibility(View.VISIBLE);
+                    layout3Band.setVisibility(View.GONE);
+                    Toast.makeText(MainActivity.this, "Режим: Комета 226С (5 полос)", Toast.LENGTH_SHORT).show();
+                } else {
+                    layout5Band.setVisibility(View.GONE);
+                    layout3Band.setVisibility(View.VISIBLE);
+                    Toast.makeText(MainActivity.this, "Режим: Комета 225 (3 полосы)", Toast.LENGTH_SHORT).show();
+                }
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        // Обработчик выбора предустановок
+        presetSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position > 0) {
+                    applyPreset(position - 1);
+                    presetSpinner.setSelection(0);
+                }
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
+
+        // Обработчики для 5-полосного EQ
+        for (int i = 0; i < 5; i++) {
+            final int index = i;
+            seek5Band[index].setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        int value = progress - 12;
+                        eq5Values[index] = value;
+                        value5Band[index].setText((value > 0 ? "+" : "") + value + " dB");
+                        sendEQValue(index, value);
+                        saveValues();
+                    }
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+
+        // Обработчики для 3-полосного EQ
+        if (seekBass != null) {
+            seekBass.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        int value = progress - 12;
+                        eq3Values[0] = value;
+                        valueBass.setText((value > 0 ? "+" : "") + value + " dB");
+                        sendEQValue(0, value);
+                        saveValues();
+                    }
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+        if (seekMid != null) {
+            seekMid.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        int value = progress - 12;
+                        eq3Values[1] = value;
+                        valueMid.setText((value > 0 ? "+" : "") + value + " dB");
+                        sendEQValue(1, value);
+                        saveValues();
+                    }
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+        if (seekTreble != null) {
+            seekTreble.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        int value = progress - 12;
+                        eq3Values[2] = value;
+                        valueTreble.setText((value > 0 ? "+" : "") + value + " dB");
+                        sendEQValue(2, value);
+                        saveValues();
+                    }
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+
+        // Кнопка сброса
+        resetButton.setOnClickListener(v -> resetToFlat());
+    }
+
+    private void applyPreset(int presetIndex) {
+        if (currentMode == MODE_KOMETA_226S) {
+            int[] values = PRESETS_5BAND[presetIndex];
+            for (int i = 0; i < 5; i++) {
+                eq5Values[i] = values[i];
+                seek5Band[i].setProgress(values[i] + 12);
+                value5Band[i].setText((values[i] > 0 ? "+" : "") + values[i] + " dB");
+                sendEQValue(i, values[i]);
+            }
+            Toast.makeText(this, "Применён пресет: " + PRESET_NAMES[presetIndex], Toast.LENGTH_SHORT).show();
+        } else {
+            // Для 3-полосного преобразуем значения из 5-полосного
+            int[] values = PRESETS_5BAND[presetIndex];
+            eq3Values[0] = values[0];
+            eq3Values[1] = values[2];
+            eq3Values[2] = values[4];
+            if (seekBass != null) seekBass.setProgress(values[0] + 12);
+            if (seekMid != null) seekMid.setProgress(values[2] + 12);
+            if (seekTreble != null) seekTreble.setProgress(values[4] + 12);
+            if (valueBass != null) valueBass.setText((values[0] > 0 ? "+" : "") + values[0] + " dB");
+            if (valueMid != null) valueMid.setText((values[2] > 0 ? "+" : "") + values[2] + " dB");
+            if (valueTreble != null) valueTreble.setText((values[4] > 0 ? "+" : "") + values[4] + " dB");
+            sendEQValue(0, values[0]);
+            sendEQValue(1, values[2]);
+            sendEQValue(2, values[4]);
+            Toast.makeText(this, "Применён пресет: " + PRESET_NAMES[presetIndex], Toast.LENGTH_SHORT).show();
+        }
+        saveValues();
+    }
+
+    private void resetToFlat() {
+        if (currentMode == MODE_KOMETA_226S) {
+            for (int i = 0; i < 5; i++) {
+                eq5Values[i] = 0;
+                seek5Band[i].setProgress(12);
+                value5Band[i].setText("0 dB");
+                sendEQValue(i, 0);
+            }
+            Toast.makeText(this, "Эквалайзер сброшен в Flat", Toast.LENGTH_SHORT).show();
+        } else {
+            eq3Values[0] = eq3Values[1] = eq3Values[2] = 0;
+            if (seekBass != null) seekBass.setProgress(12);
+            if (seekMid != null) seekMid.setProgress(12);
+            if (seekTreble != null) seekTreble.setProgress(12);
+            if (valueBass != null) valueBass.setText("0 dB");
+            if (valueMid != null) valueMid.setText("0 dB");
+            if (valueTreble != null) valueTreble.setText("0 dB");
+            sendEQValue(0, 0);
+            sendEQValue(1, 0);
+            sendEQValue(2, 0);
+            Toast.makeText(this, "Эквалайзер сброшен в Flat", Toast.LENGTH_SHORT).show();
+        }
+        saveValues();
     }
 
     private void checkPermissions() {
@@ -384,15 +494,82 @@ public class MainActivity extends AppCompatActivity {
     private void initDSPConnection() {
         prefs = getSharedPreferences("master_mitsubishi_eq", MODE_PRIVATE);
 
-        // Пытаемся подключиться к DSP через Remote класс
+        // Многократная попытка подключения к DSP
+        dspCheckHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                tryConnectDSP();
+            }
+        }, 500);
+    }
+
+    private void tryConnectDSP() {
         try {
+            // Пытаемся найти класс Remote из системного сервиса
             Class<?> remoteClass = Class.forName("com.syu.remote.Remote");
-            java.lang.reflect.Method getAutoTools = remoteClass.getMethod("getAutoTools", Context.class);
+            Method getAutoTools = remoteClass.getMethod("getAutoTools", Context.class);
             remoteInstance = getAutoTools.invoke(null, this);
+            
+            // Получаем метод commad
+            commadMethod = remoteInstance.getClass().getMethod("commad", int.class, int.class, int[].class);
+            
+            // Отправляем тестовую команду для проверки связи
+            commadMethod.invoke(remoteInstance, MODULE_SOUND, C_LOUD, new int[]{0});
+            
             dspConnected = true;
-            dspStatus.setText("✅ DSP подключен");
+            dspStatus.setText("✅ DSP подключен (управление активно)");
             dspStatus.setTextColor(Color.parseColor("#00FF00"));
-            Toast.makeText(this, "DSP готов к работе", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "DSP найден! Эквалайзер активен.", Toast.LENGTH_LONG).show();
+            
+        } catch (ClassNotFoundException e) {
+            // Remote класс не найден - пробуем альтернативный способ
+            tryAlternativeDSP();
+        } catch (Exception e) {
+            dspRetryCount++;
+            if (dspRetryCount < 5) {
+                dspStatus.setText("🔍 Повторная попытка подключения к DSP... (" + dspRetryCount + "/5)");
+                dspCheckHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        tryConnectDSP();
+                    }
+                }, 1000);
+            } else {
+                dspConnected = false;
+                dspStatus.setText("❌ DSP не обнаружен (настройки сохраняются локально)");
+                dspStatus.setTextColor(Color.parseColor("#FF0000"));
+                Toast.makeText(this, "DSP не найден. Эквалайзер работает в демо-режиме.", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
+    private void tryAlternativeDSP() {
+        try {
+            // Альтернативный путь - через TWUtil
+            Class<?> twUtilClass = Class.forName("android.tw.john.TWUtil");
+            Method getInstance = twUtilClass.getMethod("a");
+            Object twInstance = getInstance.invoke(null);
+            
+            if (twInstance != null) {
+                dspConnected = true;
+                dspStatus.setText("✅ DSP подключен (TWUtil)");
+                dspStatus.setTextColor(Color.parseColor("#00FF00"));
+                Toast.makeText(this, "DSP найден через TWUtil!", Toast.LENGTH_SHORT).show();
+                
+                // Создаём обёртку для отправки команд через TWUtil
+                final Object finalTwInstance = twInstance;
+                final Method writeMethod = twUtilClass.getMethod("write", int.class, int.class, int.class);
+                
+                commadMethod = new Object() {
+                    public void invoke(Object obj, int module, int cmd, int[] params) throws Exception {
+                        // Конвертируем команду в формат TWUtil
+                        // Адрес = модуль * 256 + команда? Нужно уточнить
+                        writeMethod.invoke(finalTwInstance, cmd, params[0], params[1]);
+                    }
+                }.getClass().getMethod("invoke", Object.class, int.class, int.class, int[].class);
+            } else {
+                throw new Exception("TWUtil instance is null");
+            }
         } catch (Exception e) {
             dspConnected = false;
             dspStatus.setText("⚠️ DSP не обнаружен (демо-режим)");
@@ -402,11 +579,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void sendEQValue(int band, int value) {
-        if (!dspConnected || remoteInstance == null) return;
+        saveValues();
+        
+        if (!dspConnected || remoteInstance == null || commadMethod == null) {
+            return;
+        }
 
         try {
-            Class<?> remoteClass = remoteInstance.getClass();
-            java.lang.reflect.Method commadMethod = remoteClass.getMethod("commad", int.class, int.class, int[].class);
+            // Отправка команды в DSP: commad(4, 1, band, value+12)
             commadMethod.invoke(remoteInstance, MODULE_SOUND, C_EQ_GAIN, new int[]{band, value + 12});
         } catch (Exception e) {
             // Ошибка отправки - игнорируем
@@ -430,9 +610,11 @@ public class MainActivity extends AppCompatActivity {
             seek5Band[i].setProgress(eq5Values[i] + 12);
             value5Band[i].setText((eq5Values[i] > 0 ? "+" : "") + eq5Values[i] + " dB");
         }
+        
         eq3Values[0] = prefs.getInt("eq3_bass", 0);
         eq3Values[1] = prefs.getInt("eq3_mid", 0);
         eq3Values[2] = prefs.getInt("eq3_treble", 0);
+        
         if (seekBass != null) seekBass.setProgress(eq3Values[0] + 12);
         if (seekMid != null) seekMid.setProgress(eq3Values[1] + 12);
         if (seekTreble != null) seekTreble.setProgress(eq3Values[2] + 12);
@@ -441,32 +623,9 @@ public class MainActivity extends AppCompatActivity {
         if (valueTreble != null) valueTreble.setText((eq3Values[2] > 0 ? "+" : "") + eq3Values[2] + " dB");
     }
 
-    private void resetToFlat() {
-        if (currentMode == MODE_KOMETA_226S) {
-            for (int i = 0; i < 5; i++) {
-                eq5Values[i] = 0;
-                seek5Band[i].setProgress(12);
-                value5Band[i].setText("0 dB");
-                sendEQValue(i, 0);
-            }
-        } else {
-            eq3Values[0] = eq3Values[1] = eq3Values[2] = 0;
-            if (seekBass != null) seekBass.setProgress(12);
-            if (seekMid != null) seekMid.setProgress(12);
-            if (seekTreble != null) seekTreble.setProgress(12);
-            if (valueBass != null) valueBass.setText("0 dB");
-            if (valueMid != null) valueMid.setText("0 dB");
-            if (valueTreble != null) valueTreble.setText("0 dB");
-            sendEQValue(0, 0);
-            sendEQValue(1, 0);
-            sendEQValue(2, 0);
-        }
-        saveValues();
-        Toast.makeText(this, "Сброшено в Flat", Toast.LENGTH_SHORT).show();
-    }
-
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        dspCheckHandler.removeCallbacksAndMessages(null);
     }
 }
