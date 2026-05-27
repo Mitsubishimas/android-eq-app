@@ -1,56 +1,44 @@
 package com.tw.eq;
 
 import android.Manifest;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import androidx.annotation.NonNull;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
-import android.content.SharedPreferences;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.InputStreamReader;
 
 public class MainActivity extends AppCompatActivity {
 
-    // Разрешения
-    private static final int REQUEST_PERMISSIONS = 100;
-    
+    // Константы для команд DSP
+    private static final int MODULE_SOUND = 4;
+    private static final int C_EQ_GAIN = 1;      // Установка полосы EQ
+    private static final int C_EQ_MODE = 2;       // Установка режима EQ
+    private static final int C_BAL_FADE = 3;      // Баланс/Фейдер
+    private static final int C_LOUD = 5;          // Громкость
+    private static final int C_EQ_Q = 16;         // Q-фактор
+
     // Режимы эквалайзера
-    private static final int MODE_KOMETA_226S = 0;
-    private static final int MODE_KOMETA_225 = 1;
-    
-    // Типы DSP для Teyes C33
-    private static final int DSP_TYPE_UNKNOWN = 0;
-    private static final int DSP_TYPE_ADAU1701 = 1;
-    private static final int DSP_TYPE_ROHM32107 = 2;
-    private static final int DSP_TYPE_BOTH = 3;
-    
-    // I2C адреса для Teyes C33
-    private static final int I2C_BUS = 1;
-    private static final int I2C_ADDR_ADAU1701 = 0x34;
-    private static final int I2C_ADDR_ROHM32107 = 0x38;
-    
-    // Регистры ADAU1701
-    private static final int ADAU1701_REG_EQ_START = 0x40;
-    private static final int ADAU1701_REG_STATUS = 0x00;
-    
-    // Регистры Rohm32107
-    private static final int ROHM_REG_EQ_START = 0x20;
-    private static final int ROHM_REG_STATUS = 0x00;
-    
+    private static final int MODE_KOMETA_226S = 0;  // 5 полос
+    private static final int MODE_KOMETA_225 = 1;   // 3 полосы
+
     // Предустановки для 5-полосного EQ
     private static final int[][] PRESETS_5BAND = {
         {0, 0, 0, 0, 0},       // Flat
@@ -62,119 +50,132 @@ public class MainActivity extends AppCompatActivity {
         {2, 3, 4, 3, 2},       // Vocal
         {-1, 0, 1, 2, 4}       // Treble Boost
     };
-    
+
     private static final String[] PRESET_NAMES = {"Flat", "Classic", "Jazz", "Rock", "Pop", "Dance", "Vocal", "Treble Boost"};
-    
+    private static final String[] FREQ_5BAND = {"63 Hz", "330 Hz", "2000 Hz", "6300 Hz", "15000 Hz"};
+
     // UI элементы
+    private LinearLayout rootLayout;
+    private TextView titleText;
+    private TextView dspStatus;
     private Spinner modeSpinner;
     private Spinner presetSpinner;
-    private View layout5Band;
-    private View layout3Band;
+    private LinearLayout layout5Band;
+    private LinearLayout layout3Band;
     private SeekBar[] seek5Band = new SeekBar[5];
     private TextView[] value5Band = new TextView[5];
     private SeekBar seekBass, seekMid, seekTreble;
     private TextView valueBass, valueMid, valueTreble;
     private Button resetButton;
-    private TextView dspStatusText;
-    private TextView dspInfoText;
-    private TextView titleText;
-    
+
     private int currentMode = MODE_KOMETA_226S;
     private int[] eq5Values = new int[5];
     private int[] eq3Values = new int[3];
     private SharedPreferences prefs;
-    
-    // DSP статус
-    private int dspType = DSP_TYPE_UNKNOWN;
     private boolean dspConnected = false;
-    private String dspFirmwareVersion = "";
-    
-    // Handler для UI обновлений
-    private Handler mainHandler = new Handler();
-    
+    private Object remoteInstance;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        
-        // Запрос разрешений
-        checkAndRequestPermissions();
-        
-        prefs = getSharedPreferences("master_mitsubishi_eq", MODE_PRIVATE);
-        
+
+        // Устанавливаем полноэкранный режим и ландшафтную ориентацию
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         initUI();
+        checkPermissions();
+        initDSPConnection();
         loadSavedValues();
-        setupListeners();
-        
-        // Проверка DSP в отдельном потоке
-        new Thread(this::detectDSP).start();
     }
-    
-    private void checkAndRequestPermissions() {
-        String[] permissions;
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            permissions = new String[]{
-                Manifest.permission.WRITE_SETTINGS,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            };
-        } else {
-            permissions = new String[]{
-                Manifest.permission.WRITE_EXTERNAL_STORAGE
-            };
-        }
-        
-        boolean allGranted = true;
-        for (String perm : permissions) {
-            if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
-                allGranted = false;
-                break;
-            }
-        }
-        
-        if (!allGranted) {
-            ActivityCompat.requestPermissions(this, permissions, REQUEST_PERMISSIONS);
-        }
-    }
-    
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_PERMISSIONS) {
-            boolean allGranted = true;
-            for (int result : grantResults) {
-                if (result != PackageManager.PERMISSION_GRANTED) {
-                    allGranted = false;
-                    break;
-                }
-            }
-            if (allGranted) {
-                Toast.makeText(this, "Разрешения получены", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Некоторые разрешения не получены", Toast.LENGTH_LONG).show();
-            }
-        }
-    }
-    
+
     private void initUI() {
-        titleText = findViewById(R.id.title_text);
-        dspStatusText = findViewById(R.id.dsp_status);
-        dspInfoText = findViewById(R.id.dsp_info);
-        modeSpinner = findViewById(R.id.mode_spinner);
-        presetSpinner = findViewById(R.id.preset_spinner);
-        layout5Band = findViewById(R.id.layout_5band);
-        layout3Band = findViewById(R.id.layout_3band);
-        resetButton = findViewById(R.id.reset_eq);
-        
-        // 5-полосные SeekBar
+        // Создаём корневой layout с градиентным фоном
+        rootLayout = new LinearLayout(this);
+        rootLayout.setOrientation(LinearLayout.VERTICAL);
+        rootLayout.setPadding(32, 48, 32, 32);
+        setContentView(rootLayout);
+
+        // Градиентный фон
+        GradientDrawable gradient = new GradientDrawable(
+                GradientDrawable.Orientation.TOP_BOTTOM,
+                new int[]{Color.parseColor("#1a1a2e"), Color.parseColor("#16213e")});
+        gradient.setCornerRadius(0);
+        rootLayout.setBackground(gradient);
+
+        // Заголовок
+        titleText = new TextView(this);
+        titleText.setText("MASTER MITSUBISHI EQ");
+        titleText.setTextSize(28);
+        titleText.setTextColor(Color.parseColor("#00BFFF"));
+        titleText.setTypeface(null, android.graphics.Typeface.BOLD);
+        titleText.setGravity(android.view.Gravity.CENTER);
+        titleText.setPadding(0, 0, 0, 32);
+        rootLayout.addView(titleText);
+
+        // Статус DSP
+        dspStatus = new TextView(this);
+        dspStatus.setText("🔍 Поиск DSP...");
+        dspStatus.setTextSize(14);
+        dspStatus.setTextColor(Color.parseColor("#FFA500"));
+        dspStatus.setGravity(android.view.Gravity.CENTER);
+        dspStatus.setPadding(0, 0, 0, 24);
+        rootLayout.addView(dspStatus);
+
+        // Спиннер выбора режима
+        TextView modeLabel = createLabel("Режим эквалайзера");
+        rootLayout.addView(modeLabel);
+
+        modeSpinner = createSpinner(new String[]{"КОМЕТА 226С (5 полос)", "КОМЕТА 225 (3 полосы)"});
+        rootLayout.addView(modeSpinner);
+
+        // Спиннер предустановок
+        TextView presetLabel = createLabel("ПРЕДУСТАНОВКИ");
+        rootLayout.addView(presetLabel);
+
+        presetSpinner = createSpinner(PRESET_NAMES);
+        rootLayout.addView(presetSpinner);
+
+        // Разделитель
+        rootLayout.addView(createDivider());
+
+        // 5-полосный эквалайзер
+        layout5Band = new LinearLayout(this);
+        layout5Band.setOrientation(LinearLayout.VERTICAL);
+        layout5Band.setPadding(0, 16, 0, 16);
+
+        TextView title5Band = new TextView(this);
+        title5Band.setText("▸ 5-ПОЛОСНЫЙ ЭКВАЛАЙЗЕР");
+        title5Band.setTextSize(16);
+        title5Band.setTextColor(Color.parseColor("#00BFFF"));
+        title5Band.setTypeface(null, android.graphics.Typeface.BOLD);
+        title5Band.setPadding(0, 0, 0, 16);
+        layout5Band.addView(title5Band);
+
+        // Создаём 5 полос
         int[] seekIds = {R.id.seek_63hz, R.id.seek_330hz, R.id.seek_2000hz, R.id.seek_6300hz, R.id.seek_15000hz};
         int[] valueIds = {R.id.value_63hz, R.id.value_330hz, R.id.value_2000hz, R.id.value_6300hz, R.id.value_15000hz};
-        
+
         for (int i = 0; i < 5; i++) {
             final int index = i;
-            seek5Band[i] = findViewById(seekIds[i]);
-            value5Band[i] = findViewById(valueIds[i]);
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            row.setPadding(0, 8, 0, 8);
+
+            TextView freqLabel = new TextView(this);
+            freqLabel.setText(FREQ_5BAND[i]);
+            freqLabel.setTextSize(14);
+            freqLabel.setTextColor(Color.parseColor("#CCCCCC"));
+            freqLabel.setWidth(120);
+            row.addView(freqLabel);
+
+            seek5Band[i] = new SeekBar(this);
             seek5Band[i].setMax(24);
             seek5Band[i].setProgress(12);
+            LinearLayout.LayoutParams seekParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+            seek5Band[i].setLayoutParams(seekParams);
             seek5Band[i].setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
                 @Override
                 public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -189,370 +190,229 @@ public class MainActivity extends AppCompatActivity {
                 @Override public void onStartTrackingTouch(SeekBar seekBar) {}
                 @Override public void onStopTrackingTouch(SeekBar seekBar) {}
             });
+            row.addView(seek5Band[i]);
+
+            value5Band[i] = new TextView(this);
+            value5Band[i].setText("0 dB");
+            value5Band[i].setTextSize(12);
+            value5Band[i].setTextColor(Color.parseColor("#00BFFF"));
+            value5Band[i].setWidth(60);
+            value5Band[i].setGravity(android.view.Gravity.END);
+            row.addView(value5Band[i]);
+
+            layout5Band.addView(row);
         }
-        
-        // 3-полосные SeekBar
-        seekBass = findViewById(R.id.seek_bass);
-        seekMid = findViewById(R.id.seek_mid);
-        seekTreble = findViewById(R.id.seek_treble);
-        valueBass = findViewById(R.id.value_bass);
-        valueMid = findViewById(R.id.value_mid);
-        valueTreble = findViewById(R.id.value_treble);
-        
-        seekBass.setMax(24);
-        seekMid.setMax(24);
-        seekTreble.setMax(24);
-        seekBass.setProgress(12);
-        seekMid.setProgress(12);
-        seekTreble.setProgress(12);
-        
-        SeekBar.OnSeekBarChangeListener listener3 = new SeekBar.OnSeekBarChangeListener() {
-            @Override
-            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if (fromUser) {
-                    int value = progress - 12;
-                    if (seekBar.getId() == R.id.seek_bass) {
-                        eq3Values[0] = value;
-                        valueBass.setText((value > 0 ? "+" : "") + value + " dB");
-                        sendEQValue(0, value);
-                    } else if (seekBar.getId() == R.id.seek_mid) {
-                        eq3Values[1] = value;
-                        valueMid.setText((value > 0 ? "+" : "") + value + " dB");
-                        sendEQValue(1, value);
-                    } else if (seekBar.getId() == R.id.seek_treble) {
-                        eq3Values[2] = value;
-                        valueTreble.setText((value > 0 ? "+" : "") + value + " dB");
-                        sendEQValue(2, value);
-                    }
-                    saveValues();
-                }
-            }
-            @Override public void onStartTrackingTouch(SeekBar seekBar) {}
-            @Override public void onStopTrackingTouch(SeekBar seekBar) {}
-        };
-        
-        seekBass.setOnSeekBarChangeListener(listener3);
-        seekMid.setOnSeekBarChangeListener(listener3);
-        seekTreble.setOnSeekBarChangeListener(listener3);
-        
-        // Настройка спиннера выбора режима
-        String[] modes = {"Комета 226С (5 полос)", "Комета 225 (3 полосы)"};
-        ArrayAdapter<String> modeAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, modes);
-        modeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        modeSpinner.setAdapter(modeAdapter);
-        modeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                currentMode = position;
-                if (position == MODE_KOMETA_226S) {
-                    layout5Band.setVisibility(View.VISIBLE);
-                    layout3Band.setVisibility(View.GONE);
-                } else {
-                    layout5Band.setVisibility(View.GONE);
-                    layout3Band.setVisibility(View.VISIBLE);
-                }
-            }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
-        });
-        
-        // Настройка спиннера предустановок
-        String[] presetItems = new String[PRESET_NAMES.length + 1];
-        presetItems[0] = "-- Выберите предустановку --";
-        System.arraycopy(PRESET_NAMES, 0, presetItems, 1, PRESET_NAMES.length);
-        ArrayAdapter<String> presetAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, presetItems);
-        presetAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        presetSpinner.setAdapter(presetAdapter);
-        presetSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position > 0) {
-                    applyPreset(position - 1);
-                    presetSpinner.setSelection(0);
-                }
-            }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
-        });
-        
+        rootLayout.addView(layout5Band);
+
+        // 3-полосный эквалайзер
+        layout3Band = new LinearLayout(this);
+        layout3Band.setOrientation(LinearLayout.VERTICAL);
+        layout3Band.setVisibility(View.GONE);
+        layout3Band.setPadding(0, 16, 0, 16);
+
+        TextView title3Band = new TextView(this);
+        title3Band.setText("▸ 3-ПОЛОСНЫЙ ЭКВАЛАЙЗЕР");
+        title3Band.setTextSize(16);
+        title3Band.setTextColor(Color.parseColor("#00BFFF"));
+        title3Band.setTypeface(null, android.graphics.Typeface.BOLD);
+        title3Band.setPadding(0, 0, 0, 16);
+        layout3Band.addView(title3Band);
+
+        // Bass
+        LinearLayout bassRow = create3BandRow("BASS", 0);
+        layout3Band.addView(bassRow);
+
+        // Mid
+        LinearLayout midRow = create3BandRow("MID", 1);
+        layout3Band.addView(midRow);
+
+        // Treble
+        LinearLayout trebleRow = create3BandRow("TREBLE", 2);
+        layout3Band.addView(trebleRow);
+
+        rootLayout.addView(layout3Band);
+
+        // Кнопка сброса
+        resetButton = new Button(this);
+        resetButton.setText("СБРОС");
+        resetButton.setTextSize(16);
+        resetButton.setTextColor(Color.WHITE);
+        GradientDrawable btnGradient = new GradientDrawable();
+        btnGradient.setColor(Color.parseColor("#00BFFF"));
+        btnGradient.setCornerRadius(30);
+        resetButton.setBackground(btnGradient);
+        resetButton.setPadding(48, 16, 48, 16);
         resetButton.setOnClickListener(v -> resetToFlat());
+        LinearLayout buttonLayout = new LinearLayout(this);
+        buttonLayout.setGravity(android.view.Gravity.CENTER);
+        buttonLayout.addView(resetButton);
+        rootLayout.addView(buttonLayout);
     }
-    
-    /**
-     * Определение типа DSP на Teyes C33
-     * Проверяем наличие ADAU1701 и Rohm32107
-     */
-    private void detectDSP() {
-        mainHandler.post(() -> {
-            dspStatusText.setText("🔍 Проверка DSP...");
-            dspStatusText.setTextColor(0xFFFFA500);
-            dspInfoText.setText("");
-        });
-        
-        boolean adau1701Found = false;
-        boolean rohm32107Found = false;
-        String adauVersion = "";
-        String rohmVersion = "";
-        
-        // 1. Проверка через системный TWUtil
-        try {
-            Class<?> twUtilClass = Class.forName("android.tw.john.TWUtil");
-            Object twInstance = twUtilClass.getMethod("a").invoke(null);
-            if (twInstance != null) {
-                mainHandler.post(() -> dspInfoText.append("TWUtil найден\n"));
-                // Отправляем тестовую команду
-                int result = (int) twUtilClass.getMethod("write", int.class, int.class)
-                    .invoke(twInstance, 65521, 0);
-                if (result == 35) {
-                    mainHandler.post(() -> dspInfoText.append("TWUtil ответ: OK\n"));
-                }
-            }
-        } catch (Exception e) {
-            mainHandler.post(() -> dspInfoText.append("TWUtil не найден\n"));
-        }
-        
-        // 2. Проверка ADAU1701 через I2C
-        adau1701Found = checkI2CDevice(I2C_ADDR_ADAU1701);
-        if (adau1701Found) {
-            adauVersion = readADAU1701Version();
-            mainHandler.post(() -> dspInfoText.append("✅ ADAU1701 обнаружен\n"));
-            if (!adauVersion.isEmpty()) {
-                mainHandler.post(() -> dspInfoText.append("   Версия: " + adauVersion + "\n"));
-            }
-        } else {
-            mainHandler.post(() -> dspInfoText.append("❌ ADAU1701 не найден\n"));
-        }
-        
-        // 3. Проверка Rohm32107 через I2C
-        rohm32107Found = checkI2CDevice(I2C_ADDR_ROHM32107);
-        if (rohm32107Found) {
-            rohmVersion = readRohmVersion();
-            mainHandler.post(() -> dspInfoText.append("✅ Rohm32107 обнаружен\n"));
-            if (!rohmVersion.isEmpty()) {
-                mainHandler.post(() -> dspInfoText.append("   Версия: " + rohmVersion + "\n"));
-            }
-        } else {
-            mainHandler.post(() -> dspInfoText.append("❌ Rohm32107 не найден\n"));
-        }
-        
-        // 4. Проверка через sysfs
-        if (!adau1701Found) {
-            adau1701Found = checkSysfsDevice("adau");
-            if (adau1701Found) mainHandler.post(() -> dspInfoText.append("✅ ADAU1701 (sysfs)\n"));
-        }
-        if (!rohm32107Found) {
-            rohm32107Found = checkSysfsDevice("rohm");
-            if (rohm32107Found) mainHandler.post(() -> dspInfoText.append("✅ Rohm32107 (sysfs)\n"));
-        }
-        
-        // 5. Определяем итоговый тип DSP
-        if (adau1701Found && rohm32107Found) {
-            dspType = DSP_TYPE_BOTH;
-            dspConnected = true;
-            mainHandler.post(() -> {
-                dspStatusText.setText("✅ Teyes C33 DSP готов");
-                dspStatusText.setTextColor(0xFF00FF00);
-                dspInfoText.append("\n🎵 Эквалайзер работает через Rohm32107\n");
-                dspInfoText.append("🔊 Обработка звука через ADAU1701\n");
-                Toast.makeText(this, "DSP Teyes C33 готов к работе!", Toast.LENGTH_SHORT).show();
-            });
-        } else if (rohm32107Found) {
-            dspType = DSP_TYPE_ROHM32107;
-            dspConnected = true;
-            mainHandler.post(() -> {
-                dspStatusText.setText("✅ Rohm32107 (эквалайзер)");
-                dspStatusText.setTextColor(0xFF00FF00);
-            });
-        } else if (adau1701Found) {
-            dspType = DSP_TYPE_ADAU1701;
-            dspConnected = true;
-            mainHandler.post(() -> {
-                dspStatusText.setText("✅ ADAU1701 (обработка звука)");
-                dspStatusText.setTextColor(0xFF00FF00);
-            });
-        } else {
-            dspConnected = false;
-            mainHandler.post(() -> {
-                dspStatusText.setText("⚠️ DSP не обнаружен\nДемо-режим");
-                dspStatusText.setTextColor(0xFFFF0000);
-                dspInfoText.append("\n⚠️ Работа в демо-режиме\n");
-                Toast.makeText(this, "DSP не найден. Настройки сохраняются локально.", Toast.LENGTH_LONG).show();
-            });
-        }
-    }
-    
-    /**
-     * Проверка I2C устройства по адресу
-     */
-    private boolean checkI2CDevice(int address) {
-        try {
-            String hexAddr = Integer.toHexString(address);
-            Process process = Runtime.getRuntime().exec(
-                new String[]{"sh", "-c", "i2cdetect -y " + I2C_BUS + " | grep " + hexAddr}
-            );
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line = reader.readLine();
-            reader.close();
-            return line != null && line.contains(hexAddr);
-        } catch (Exception e) {
-            return false;
-        }
-    }
-    
-    /**
-     * Проверка устройства через sysfs
-     */
-    private boolean checkSysfsDevice(String name) {
-        try {
-            File sysfsDir = new File("/sys/class/i2c-dev/i2c-" + I2C_BUS + "/device");
-            if (sysfsDir.exists()) {
-                File[] files = sysfsDir.listFiles();
-                if (files != null) {
-                    for (File f : files) {
-                        if (f.getName().toLowerCase().contains(name)) {
-                            return true;
-                        }
+
+    private LinearLayout create3BandRow(String label, final int band) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        row.setPadding(0, 8, 0, 8);
+
+        TextView labelView = new TextView(this);
+        labelView.setText(label);
+        labelView.setTextSize(14);
+        labelView.setTextColor(Color.parseColor("#CCCCCC"));
+        labelView.setWidth(120);
+        row.addView(labelView);
+
+        SeekBar seekBar = new SeekBar(this);
+        seekBar.setMax(24);
+        seekBar.setProgress(12);
+        LinearLayout.LayoutParams seekParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1);
+        seekBar.setLayoutParams(seekParams);
+        row.addView(seekBar);
+
+        TextView valueView = new TextView(this);
+        valueView.setText("0 dB");
+        valueView.setTextSize(12);
+        valueView.setTextColor(Color.parseColor("#00BFFF"));
+        valueView.setWidth(60);
+        valueView.setGravity(android.view.Gravity.END);
+        row.addView(valueView);
+
+        if (band == 0) {
+            seekBass = seekBar;
+            valueBass = valueView;
+            seekBass.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        int value = progress - 12;
+                        eq3Values[band] = value;
+                        valueBass.setText((value > 0 ? "+" : "") + value + " dB");
+                        sendEQValue(band, value);
+                        saveValues();
                     }
                 }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        } else if (band == 1) {
+            seekMid = seekBar;
+            valueMid = valueView;
+            seekMid.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        int value = progress - 12;
+                        eq3Values[band] = value;
+                        valueMid.setText((value > 0 ? "+" : "") + value + " dB");
+                        sendEQValue(band, value);
+                        saveValues();
+                    }
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        } else {
+            seekTreble = seekBar;
+            valueTreble = valueView;
+            seekTreble.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    if (fromUser) {
+                        int value = progress - 12;
+                        eq3Values[band] = value;
+                        valueTreble.setText((value > 0 ? "+" : "") + value + " dB");
+                        sendEQValue(band, value);
+                        saveValues();
+                    }
+                }
+                @Override public void onStartTrackingTouch(SeekBar seekBar) {}
+                @Override public void onStopTrackingTouch(SeekBar seekBar) {}
+            });
+        }
+
+        return row;
+    }
+
+    private TextView createLabel(String text) {
+        TextView label = new TextView(this);
+        label.setText(text);
+        label.setTextSize(12);
+        label.setTextColor(Color.parseColor("#888888"));
+        label.setPadding(0, 16, 0, 8);
+        return label;
+    }
+
+    private Spinner createSpinner(String[] items) {
+        Spinner spinner = new Spinner(this);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, items);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setPadding(8, 8, 8, 8);
+        return spinner;
+    }
+
+    private View createDivider() {
+        View divider = new View(this);
+        divider.setBackgroundColor(Color.parseColor("#333333"));
+        divider.setLayoutParams(new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 1));
+        divider.setPadding(0, 16, 0, 16);
+        return divider;
+    }
+
+    private void checkPermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (!android.provider.Settings.System.canWrite(this)) {
+                Intent intent = new Intent(android.provider.Settings.ACTION_MANAGE_WRITE_SETTINGS);
+                intent.setData(android.net.Uri.parse("package:" + getPackageName()));
+                startActivity(intent);
             }
-            return false;
-        } catch (Exception e) {
-            return false;
+        }
+
+        String[] permissions = {Manifest.permission.WRITE_EXTERNAL_STORAGE};
+        boolean allGranted = true;
+        for (String perm : permissions) {
+            if (ContextCompat.checkSelfPermission(this, perm) != PackageManager.PERMISSION_GRANTED) {
+                allGranted = false;
+                break;
+            }
+        }
+        if (!allGranted) {
+            ActivityCompat.requestPermissions(this, permissions, 100);
         }
     }
-    
-    /**
-     * Чтение версии ADAU1701
-     */
-    private String readADAU1701Version() {
+
+    private void initDSPConnection() {
+        prefs = getSharedPreferences("master_mitsubishi_eq", MODE_PRIVATE);
+
+        // Пытаемся подключиться к DSP через Remote класс
         try {
-            Process process = Runtime.getRuntime().exec(
-                new String[]{"sh", "-c", "i2cget -y " + I2C_BUS + " " + Integer.toHexString(I2C_ADDR_ADAU1701) + " 0x1C"}
-            );
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String result = reader.readLine();
-            reader.close();
-            return result != null ? result : "";
+            Class<?> remoteClass = Class.forName("com.syu.remote.Remote");
+            java.lang.reflect.Method getAutoTools = remoteClass.getMethod("getAutoTools", Context.class);
+            remoteInstance = getAutoTools.invoke(null, this);
+            dspConnected = true;
+            dspStatus.setText("✅ DSP подключен");
+            dspStatus.setTextColor(Color.parseColor("#00FF00"));
+            Toast.makeText(this, "DSP готов к работе", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            return "";
+            dspConnected = false;
+            dspStatus.setText("⚠️ DSP не обнаружен (демо-режим)");
+            dspStatus.setTextColor(Color.parseColor("#FF6600"));
+            Toast.makeText(this, "DSP не найден. Настройки сохраняются локально.", Toast.LENGTH_LONG).show();
         }
     }
-    
-    /**
-     * Чтение версии Rohm32107
-     */
-    private String readRohmVersion() {
-        try {
-            Process process = Runtime.getRuntime().exec(
-                new String[]{"sh", "-c", "i2cget -y " + I2C_BUS + " " + Integer.toHexString(I2C_ADDR_ROHM32107) + " 0x00"}
-            );
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String result = reader.readLine();
-            reader.close();
-            return result != null ? "0x" + result : "";
-        } catch (Exception e) {
-            return "";
-        }
-    }
-    
-    /**
-     * Отправка значения эквалайзера в DSP
-     * Для Teyes C33 используем Rohm32107 (адреса 0x20-0x24 для 5 полос)
-     */
+
     private void sendEQValue(int band, int value) {
-        if (!dspConnected) return;
-        
-        int regAddress;
-        if (dspType == DSP_TYPE_BOTH || dspType == DSP_TYPE_ROHM32107) {
-            // Rohm32107: регистры 0x20-0x24
-            regAddress = ROHM_REG_EQ_START + band;
-            sendI2CCommand(I2C_ADDR_ROHM32107, regAddress, value + 12);
-        } else if (dspType == DSP_TYPE_ADAU1701) {
-            // ADAU1701: регистры 0x40-0x44
-            regAddress = ADAU1701_REG_EQ_START + band;
-            sendI2CCommand(I2C_ADDR_ADAU1701, regAddress, value + 12);
-        }
-    }
-    
-    /**
-     * Отправка I2C команды
-     */
-    private void sendI2CCommand(int address, int reg, int value) {
+        if (!dspConnected || remoteInstance == null) return;
+
         try {
-            String cmd = String.format("i2cset -y %d 0x%02x 0x%02x 0x%02x", 
-                I2C_BUS, address, reg, value);
-            Runtime.getRuntime().exec(new String[]{"sh", "-c", cmd});
+            Class<?> remoteClass = remoteInstance.getClass();
+            java.lang.reflect.Method commadMethod = remoteClass.getMethod("commad", int.class, int.class, int[].class);
+            commadMethod.invoke(remoteInstance, MODULE_SOUND, C_EQ_GAIN, new int[]{band, value + 12});
         } catch (Exception e) {
-            // Пробуем альтернативный метод через TWUtil
-            sendViaTWUtil(address, reg, value);
+            // Ошибка отправки - игнорируем
         }
     }
-    
-    /**
-     * Отправка через TWUtil (альтернативный метод)
-     */
-    private void sendViaTWUtil(int address, int reg, int value) {
-        try {
-            Class<?> twUtilClass = Class.forName("android.tw.john.TWUtil");
-            Object twInstance = twUtilClass.getMethod("a").invoke(null);
-            twUtilClass.getMethod("write", int.class, int.class, int.class)
-                .invoke(twInstance, address, reg, value);
-        } catch (Exception e) {
-            // Игнорируем - DSP не доступен
-        }
-    }
-    
-    private void applyPreset(int presetIndex) {
-        if (currentMode == MODE_KOMETA_226S) {
-            int[] values = PRESETS_5BAND[presetIndex];
-            for (int i = 0; i < 5; i++) {
-                eq5Values[i] = values[i];
-                seek5Band[i].setProgress(values[i] + 12);
-                value5Band[i].setText((values[i] > 0 ? "+" : "") + values[i] + " dB");
-                sendEQValue(i, values[i]);
-            }
-        } else {
-            // Для 3-полосного преобразуем пресет
-            int[] values = PRESETS_5BAND[presetIndex];
-            eq3Values[0] = values[0];
-            eq3Values[1] = values[2];
-            eq3Values[2] = values[4];
-            seekBass.setProgress(values[0] + 12);
-            seekMid.setProgress(values[2] + 12);
-            seekTreble.setProgress(values[4] + 12);
-            valueBass.setText((values[0] > 0 ? "+" : "") + values[0] + " dB");
-            valueMid.setText((values[2] > 0 ? "+" : "") + values[2] + " dB");
-            valueTreble.setText((values[4] > 0 ? "+" : "") + values[4] + " dB");
-            sendEQValue(0, values[0]);
-            sendEQValue(1, values[2]);
-            sendEQValue(2, values[4]);
-        }
-        saveValues();
-        Toast.makeText(this, "Пресет: " + PRESET_NAMES[presetIndex], Toast.LENGTH_SHORT).show();
-    }
-    
-    private void resetToFlat() {
-        if (currentMode == MODE_KOMETA_226S) {
-            for (int i = 0; i < 5; i++) {
-                eq5Values[i] = 0;
-                seek5Band[i].setProgress(12);
-                value5Band[i].setText("0 dB");
-                sendEQValue(i, 0);
-            }
-        } else {
-            eq3Values[0] = eq3Values[1] = eq3Values[2] = 0;
-            seekBass.setProgress(12);
-            seekMid.setProgress(12);
-            seekTreble.setProgress(12);
-            valueBass.setText("0 dB");
-            valueMid.setText("0 dB");
-            valueTreble.setText("0 dB");
-            sendEQValue(0, 0);
-            sendEQValue(1, 0);
-            sendEQValue(2, 0);
-        }
-        saveValues();
-        Toast.makeText(this, "Сброшено в Flat", Toast.LENGTH_SHORT).show();
-    }
-    
+
     private void saveValues() {
         SharedPreferences.Editor editor = prefs.edit();
         for (int i = 0; i < 5; i++) {
@@ -563,7 +423,7 @@ public class MainActivity extends AppCompatActivity {
         editor.putInt("eq3_treble", eq3Values[2]);
         editor.apply();
     }
-    
+
     private void loadSavedValues() {
         for (int i = 0; i < 5; i++) {
             eq5Values[i] = prefs.getInt("eq5_" + i, 0);
@@ -573,28 +433,40 @@ public class MainActivity extends AppCompatActivity {
         eq3Values[0] = prefs.getInt("eq3_bass", 0);
         eq3Values[1] = prefs.getInt("eq3_mid", 0);
         eq3Values[2] = prefs.getInt("eq3_treble", 0);
-        seekBass.setProgress(eq3Values[0] + 12);
-        seekMid.setProgress(eq3Values[1] + 12);
-        seekTreble.setProgress(eq3Values[2] + 12);
-        valueBass.setText((eq3Values[0] > 0 ? "+" : "") + eq3Values[0] + " dB");
-        valueMid.setText((eq3Values[1] > 0 ? "+" : "") + eq3Values[1] + " dB");
-        valueTreble.setText((eq3Values[2] > 0 ? "+" : "") + eq3Values[2] + " dB");
+        if (seekBass != null) seekBass.setProgress(eq3Values[0] + 12);
+        if (seekMid != null) seekMid.setProgress(eq3Values[1] + 12);
+        if (seekTreble != null) seekTreble.setProgress(eq3Values[2] + 12);
+        if (valueBass != null) valueBass.setText((eq3Values[0] > 0 ? "+" : "") + eq3Values[0] + " dB");
+        if (valueMid != null) valueMid.setText((eq3Values[1] > 0 ? "+" : "") + eq3Values[1] + " dB");
+        if (valueTreble != null) valueTreble.setText((eq3Values[2] > 0 ? "+" : "") + eq3Values[2] + " dB");
     }
-    
-    private void setupListeners() {
-        // Дополнительная настройка
+
+    private void resetToFlat() {
+        if (currentMode == MODE_KOMETA_226S) {
+            for (int i = 0; i < 5; i++) {
+                eq5Values[i] = 0;
+                seek5Band[i].setProgress(12);
+                value5Band[i].setText("0 dB");
+                sendEQValue(i, 0);
+            }
+        } else {
+            eq3Values[0] = eq3Values[1] = eq3Values[2] = 0;
+            if (seekBass != null) seekBass.setProgress(12);
+            if (seekMid != null) seekMid.setProgress(12);
+            if (seekTreble != null) seekTreble.setProgress(12);
+            if (valueBass != null) valueBass.setText("0 dB");
+            if (valueMid != null) valueMid.setText("0 dB");
+            if (valueTreble != null) valueTreble.setText("0 dB");
+            sendEQValue(0, 0);
+            sendEQValue(1, 0);
+            sendEQValue(2, 0);
+        }
+        saveValues();
+        Toast.makeText(this, "Сброшено в Flat", Toast.LENGTH_SHORT).show();
     }
-    
+
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        // Закрываем соединение с DSP если нужно
-        try {
-            Class<?> twUtilClass = Class.forName("android.tw.john.TWUtil");
-            Object twInstance = twUtilClass.getMethod("a").invoke(null);
-            twUtilClass.getMethod("close").invoke(twInstance);
-        } catch (Exception e) {
-            // Игнорируем
-        }
     }
 }
